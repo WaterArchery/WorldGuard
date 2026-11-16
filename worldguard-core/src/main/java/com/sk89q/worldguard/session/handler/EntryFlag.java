@@ -52,7 +52,7 @@ public class EntryFlag extends Handler {
     public boolean onCrossBoundary(LocalPlayer player, Location from, Location to, ApplicableRegionSet toSet, Set<ProtectedRegion> entered, Set<ProtectedRegion> exited, MoveType moveType) {
         boolean allowed = toSet.testState(player, Flags.ENTRY);
 
-        if (!getSession().getManager().hasBypass(player, (World) to.getExtent()) && !allowed && moveType.isCancellable()) {
+        if (!allowed && moveType.isCancellable() && !getSession().getManager().hasBypass(player, (World) to.getExtent())) {
             String message = toSet.queryValue(player, Flags.ENTRY_DENY_MESSAGE);
             long now = System.currentTimeMillis();
 

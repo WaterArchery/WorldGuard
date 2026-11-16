@@ -70,6 +70,7 @@ public abstract class ConfigurationManager {
     public boolean useGodGroup;
     public boolean useAmphibiousGroup;
     public boolean usePlayerMove;
+    public boolean skipEmptyWorldSessions;
     public boolean usePlayerTeleports;
     public boolean deopOnJoin;
     public boolean blockInGameOp;

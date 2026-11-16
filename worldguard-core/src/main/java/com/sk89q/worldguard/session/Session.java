@@ -24,11 +24,13 @@ import com.google.common.collect.Sets;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.format.TextColor;
+import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.config.ConfigurationManager;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.StateFlag.State;
+import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import com.sk89q.worldguard.session.handler.Handler;
@@ -52,6 +54,7 @@ public class Session {
     private final HashMap<Class<?>, Handler> handlers = Maps.newLinkedHashMap();
     private Location lastValid;
     private Set<ProtectedRegion> lastRegionSet;
+    private boolean lastWorldEmpty;
     private final AtomicBoolean needRefresh = new AtomicBoolean(false);
     private boolean initialized;
 
@@ -108,6 +111,7 @@ public class Session {
 
         lastValid = location;
         lastRegionSet = set.getRegions();
+        lastWorldEmpty = false;
         ConfigurationManager cfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager();
         disableBypass = cfg.disableDefaultBypass;
         if (cfg.announceBypassStatus && player.hasPermission("worldguard.region.toggle-bypass")) {
@@ -151,8 +155,10 @@ public class Session {
      * @param player The player
      */
     public void tick(LocalPlayer player) {
-        RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
         Location location = player.getLocation();
+        if (hasNoRegions(location)) return;
+
+        RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
         ApplicableRegionSet set = query.getApplicableRegions(location);
 
         for (Handler handler : handlers.values()) {
@@ -230,6 +236,12 @@ public class Session {
         }
 
         if (forced || Locations.isDifferentBlock(lastValid, to)) {
+            boolean worldEmpty = hasNoRegions(to);
+            if (!forced && worldEmpty && lastWorldEmpty && lastValid.getExtent().equals(to.getExtent())) {
+                lastValid = to;
+                return null;
+            }
+
             ApplicableRegionSet toSet = query.getApplicableRegions(to);
 
             for (Handler handler : handlers.values()) {
@@ -249,9 +261,19 @@ public class Session {
 
             lastValid = to;
             lastRegionSet = toSet.getRegions();
+            lastWorldEmpty = worldEmpty;
         }
 
         return null;
+    }
+
+    private static boolean hasNoRegions(Location location) {
+        ConfigurationManager config = WorldGuard.getInstance().getPlatform().getGlobalStateManager();
+        if (!config.skipEmptyWorldSessions) return false;
+        World world = (World) location.getExtent();
+        if (!config.get(world).useRegions) return false;
+        RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(world);
+        return manager != null && manager.size() == 0;
     }
 
     /**

@@ -97,7 +97,8 @@ public class ChunkHashTable implements ConcurrentRegionIndex {
             if (state == null && create) {
                 state = new ChunkState(position);
                 states.put(position.x(), position.z(), state);
-                executor.submit(new EnumerateRegions(position));
+                if (index.size() == 0) state.setRegions(Collections.emptyList());
+                else executor.submit(new EnumerateRegions(position));
             }
         }
         return state;

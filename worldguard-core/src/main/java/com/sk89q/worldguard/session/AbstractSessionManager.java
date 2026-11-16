@@ -175,7 +175,9 @@ public abstract class AbstractSessionManager implements SessionManager {
 
     @Override
     public Session get(LocalPlayer player) {
-        Session session = sessions.asMap().computeIfAbsent(new CacheKey(player), (k) -> new Session(this));
+        CacheKey key = new CacheKey(player);
+        Session session = sessions.getIfPresent(key);
+        if (session == null) session = sessions.asMap().computeIfAbsent(key, (k) -> new Session(this));
         session.ensureInitialized(player, this::initializeSession);
         return session;
     }

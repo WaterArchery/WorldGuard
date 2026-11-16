@@ -64,6 +64,7 @@ public abstract class YamlConfigurationManager extends ConfigurationManager {
         useAmphibiousGroup = config.getBoolean("auto-no-drowning-group", false);
         config.removeProperty("auto-invincible-permission");
         usePlayerMove = config.getBoolean("use-player-move-event", true);
+        skipEmptyWorldSessions = config.getBoolean("skip-session-checks-in-worlds-without-regions", true);
         usePlayerTeleports = config.getBoolean("use-player-teleports", true);
         particleEffects = config.getBoolean("use-particle-effects", true);
         disablePermissionCache = config.getBoolean("disable-permission-cache", false);
